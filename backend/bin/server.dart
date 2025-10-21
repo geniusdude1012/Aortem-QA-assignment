@@ -13,11 +13,11 @@ void main(List<String> args) async {
 
   // Root route - for testing connection
   router.get('/', (Request request) {
-    print('📍 Root endpoint hit');
+    print('Root endpoint hit');
     return Response.ok(
       jsonEncode({
         'ok': true,
-        'message': '🚀 Backend running successfully!',
+        'message': 'Backend running successfully!',
         'timestamp': DateTime.now().toIso8601String(),
       }),
       headers: {
@@ -27,18 +27,19 @@ void main(List<String> args) async {
     );
   });
 
-  // Login route
+  // Login route - UPDATED: Don't show password in logs
   router.post('/login', (Request request) async {
-    print('📍 Login endpoint hit');
+    print('Login endpoint hit');
     final body = await request.readAsString();
-    print('📩 Login request body: $body');
 
     try {
       final jsonBody = jsonDecode(body);
       final email = jsonBody['email']?.toString() ?? '';
       final password = jsonBody['password']?.toString() ?? '';
 
-      print('🔐 Attempting login for: $email');
+      // Safe logging - don't show password
+      print('Login request for email: $email');
+      print('Password length: ${password.length} characters');
 
       // Check if user exists
       final user = _users.firstWhere(
@@ -47,7 +48,7 @@ void main(List<String> args) async {
       );
 
       if (user.isNotEmpty) {
-        print('✅ Login successful for: $email');
+        print('Login successful for: $email');
         return Response.ok(
           jsonEncode({
             'ok': true,
@@ -61,7 +62,7 @@ void main(List<String> args) async {
           },
         );
       } else {
-        print('❌ Login failed for: $email - Invalid credentials');
+        print('Login failed for: $email - Invalid credentials');
         return Response.ok(
           jsonEncode({'ok': false, 'message': 'Invalid email or password'}),
           headers: {
@@ -71,7 +72,7 @@ void main(List<String> args) async {
         );
       }
     } catch (e) {
-      print('🚨 Login error: $e');
+      print('Login error: $e');
       return Response.badRequest(
         body: jsonEncode({'ok': false, 'message': 'Invalid JSON format'}),
         headers: {
@@ -82,23 +83,24 @@ void main(List<String> args) async {
     }
   });
 
-  // Signup route
+  // Signup route - UPDATED: Don't show password in logs
   router.post('/signup', (Request request) async {
-    print('📍 Signup endpoint hit');
+    print('Signup endpoint hit');
     final body = await request.readAsString();
-    print('📩 Signup request body: $body');
 
     try {
       final jsonBody = jsonDecode(body);
       final email = jsonBody['email']?.toString() ?? '';
       final password = jsonBody['password']?.toString() ?? '';
 
-      print('🔐 Processing signup for: $email');
+      // Safe logging - don't show password
+      print('Signup request for email: $email');
+      print('Password length: ${password.length} characters');
 
       // Check if user already exists
       final existingUser = _users.where((user) => user['email'] == email);
       if (existingUser.isNotEmpty) {
-        print('❌ User already exists: $email');
+        print('User already exists: $email');
         return Response.ok(
           jsonEncode({
             'ok': false,
@@ -118,9 +120,8 @@ void main(List<String> args) async {
         'createdAt': DateTime.now().toIso8601String(),
       });
 
-      print('✅ New user registered: $email');
-      print('📊 Total users: ${_users.length}');
-      print('👥 All users: $_users');
+      print('New user registered: $email');
+      print('Total users: ${_users.length}');
 
       return Response.ok(
         jsonEncode({
@@ -135,7 +136,7 @@ void main(List<String> args) async {
         },
       );
     } catch (e) {
-      print('🚨 Signup error: $e');
+      print('Signup error: $e');
       return Response.badRequest(
         body: jsonEncode({'ok': false, 'message': 'Invalid JSON format'}),
         headers: {
@@ -146,13 +147,19 @@ void main(List<String> args) async {
     }
   });
 
-  // Get all users (for debugging)
+  // Get all users (for debugging) - UPDATED: Don't show passwords
   router.get('/users', (Request request) {
-    print('📍 Users endpoint hit');
+    print('Users endpoint hit');
+
+    // Create safe user list without passwords
+    final safeUsers = _users
+        .map((user) => {'email': user['email'], 'createdAt': user['createdAt']})
+        .toList();
+
     return Response.ok(
       jsonEncode({
         'ok': true,
-        'users': _users,
+        'users': safeUsers, // Only show safe user data
         'count': _users.length,
         'timestamp': DateTime.now().toIso8601String(),
       }),
@@ -165,7 +172,7 @@ void main(List<String> args) async {
 
   // Clear all users (for testing)
   router.delete('/users', (Request request) {
-    print('📍 Clear users endpoint hit');
+    print('Clear users endpoint hit');
     final count = _users.length;
     _users.clear();
     return Response.ok(
@@ -195,20 +202,18 @@ void main(List<String> args) async {
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
   final server = await io.serve(handler, InternetAddress.anyIPv4, port);
 
-  print('🎊 ====================================');
-  print('✅ Server running on http://localhost:${server.port}');
-  print('🎊 ====================================');
-  print('📋 Available routes:');
+  print(' ====================================');
+  print(' Server running on http://localhost:${server.port}');
+  print(' ====================================');
+  print(' Available routes:');
   print('   GET    /');
   print('   POST   /login');
   print('   POST   /signup');
-  print('   GET    /users (debug)');
+  print('   GET    /users (debug - safe data only)');
   print('   DELETE /users (clear all)');
-  print('🎊 ====================================');
-  print('🔍 Test the server:');
-  print('   http://localhost:${server.port}/');
-  print('   http://localhost:${server.port}/users');
-  print('🎊 ====================================');
+  print(' ====================================');
+  print(' Security: Passwords are not logged');
+  print(' ====================================');
 }
 
 Response _corsResponse() {
