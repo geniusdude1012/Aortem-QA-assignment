@@ -62,7 +62,7 @@
 
 ---
 
-**Checklist Executed By**: ********\_\_\_\_********  
-**Date**: ********\_\_\_\_********  
+**Checklist Executed By**: **\*\*\*\***\_\_\_\_**\*\*\*\***  
+**Date**: **\*\*\*\***\_\_\_\_**\*\*\*\***  
 **Release Version**: 0.0.12  
-**Status**: ✅ Ready for Release / ⚠️ Issues Found / ❌ Blocked
+**Status**: Ready for Release / Issues Found /Blocked
