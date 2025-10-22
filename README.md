@@ -6,7 +6,7 @@ A containerized Flutter frontend and Dart backend application with authenticatio
 
 ```bash
 # Clone and setup
-git clone <repository-url>
+git clone "https://github.com/geniusdude1012/Aortem-QA-assignment.git"
 cd aortem-qa-assignment
 
 # Build and run everything
