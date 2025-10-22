@@ -1,0 +1,39 @@
+# Dockerfile.frontend (Alternative - Simple HTTP server)
+# Multi-stage build for Flutter frontend
+
+# Build stage
+FROM ghcr.io/cirruslabs/flutter:stable AS build
+
+WORKDIR /app
+
+# Copy pubspec files first for better caching
+COPY frontend/pubspec.* ./
+RUN flutter pub get
+
+# Copy source code
+COPY frontend/ .
+RUN flutter pub get --offline
+
+# Build the Flutter web app
+RUN flutter build web --release --web-renderer html
+
+# Runtime stage - Use a simple HTTP server
+FROM python:alpine
+
+WORKDIR /app
+
+# Copy built web files
+COPY --from=build /app/build/web ./web
+
+# Install a simple HTTP server
+RUN pip install http-server
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+
+# Run simple HTTP server
+CMD ["http-server", "web", "-p", "8080", "-a", "0.0.0.0"]

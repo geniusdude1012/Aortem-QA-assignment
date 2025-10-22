@@ -1,0 +1,43 @@
+# Dockerfile.backend
+# Multi-stage build for Dart backend
+
+# Build stage
+FROM dart:stable AS build
+
+WORKDIR /app
+
+# Copy pubspec files first for better caching
+COPY backend/pubspec.* ./
+RUN dart pub get
+
+# Copy source code
+COPY backend/ .
+RUN dart pub get --offline
+
+# Build the backend server
+RUN dart compile exe bin/server.dart -o backend_server
+
+# Create a minimal runtime stage
+FROM debian:bookworm-slim
+
+# Install ca-certificates for HTTPS and curl for health checks
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+WORKDIR /app
+
+# Copy built executable from build stage
+COPY --from=build /app/backend_server /app/
+
+# Expose port
+EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8081/healthz || exit 1
+
+# Run the server
+CMD ["/app/backend_server"]
